@@ -93,7 +93,6 @@ function theme_figure($variables) {
   return '<figure' . drupal_attributes($element['#attributes']) . '>' . $element['#children'] . '</figure>';
 }
 function theme_responsive_image($variables){
-  dsm($variables);
   $attributes = $variables['attributes'];
   $attributes['src'] = file_create_url($variables['path']);
 
@@ -171,14 +170,21 @@ function res_images_field_formatter_info() {
     'description' => t('Creates a image with data-src attribute.'),
     'field types' => array('file', 'image'),
     'settings' => array(
-      'fallback_image_style' => '',
-      'image_link' => '',
-      'image_styles' => ''
+      'fallback_image_style' => '750',
+      'image_link' => 'referencing_entity',
+      'image_styles' => '750'
     ),
   );
   return $info;
 }
+function res_images_field_formatter_settings_summary($field, $instance, $view_mode){
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $summary = t('Responsive image');
+  return $summary;
+}
 function res_images_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
   $element = array();

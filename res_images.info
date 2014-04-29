@@ -1,3 +1,5 @@
 name = Responsive images
 description = Yet another image module
 core = 7.x
+
+dependencies[] = jquery_update

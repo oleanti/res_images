@@ -216,13 +216,14 @@
       }
     }
     setImageSource = function ( $el, imageToUse ) {
-      if ( settings.useTransparentGif ) {
+      if (settings.useTransparentGif) {
         $el.attr('src', settings.transparentGifSrc)
           .css('max-height', '100%')
           .css('max-width', '100%')
           .css('background', 'url("' + imageToUse.src + '") no-repeat 0 0')
           .css('background-size', 'contain');
       } else {
+        console.log(imageToUse);
         $el.attr('src', imageToUse.src);
         $el.attr('width', imageToUse.wrapperWidth);
         $el.attr('data-width', imageToUse.key);
@@ -234,7 +235,7 @@
       }else if(typeof(mode) === "undefined"){
         mode = 1
       }
-      wrapperWidth = $el.parent().width();
+      wrapperWidth = $el.parents('.response-image-container').width();
       imageWidth = wrapperWidth * mode;
       var srcset = $el.data('srcset'); // set of images that can be used
       if(typeof srcset === 'undefined'){

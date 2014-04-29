@@ -191,7 +191,6 @@ function res_images_field_formatter_settings_summary($field, $instance, $view_mo
   return $summary;
 }
 function res_images_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
-
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
   $element = array();
@@ -219,7 +218,7 @@ function res_images_field_formatter_settings_form($field, $instance, $view_mode,
     );
 
     $link_types = array();
-    if($instance['entity_type'] == 'node'){
+    if($instance['entity_type'] == 'node' || isset($field['bundles']['node'])){
       $link_types['node'] = t('Node');
       $link_types['file'] = t('Image file');
     }elseif($instance['entity_type'] == 'file'){

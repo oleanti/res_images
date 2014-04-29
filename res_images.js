@@ -223,7 +223,7 @@
           .css('background', 'url("' + imageToUse.src + '") no-repeat 0 0')
           .css('background-size', 'contain');
       } else {
-        console.log(imageToUse);
+
         $el.attr('src', imageToUse.src);
         $el.attr('width', imageToUse.wrapperWidth);
         $el.attr('data-width', imageToUse.key);
@@ -263,7 +263,7 @@
         setImageSource($el, imageToUse);
       }
       $el.on('speedTestComplete.responsive', function(){
-        console.log('SPEED test complete');
+        //console.log('SPEED test complete');
         // check if client can get high res image
         if ($.responsive.devicePixelRatio > 1 && $.responsive.bandwidth === 'high') {
           var imageToUse = getImageToUse($el, 2);

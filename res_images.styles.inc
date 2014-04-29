@@ -1,6 +1,6 @@
 <?php
 
-function _hk_images_image_styles(){
+function _res_images_image_styles(){
   $styles = array();
 
   $styles[RESPONSIVE_IMAGE_STYLE] = array(

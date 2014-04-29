@@ -1,0 +1,10 @@
+<?php
+/*
+function hk_images_install(){
+
+}
+function hk_images_uninstall(){
+  //image_style_delete(image_style_load('responsive'));
+}
+*/
+?>

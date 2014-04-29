@@ -1,0 +1,249 @@
+<?php
+
+define('RESPONSIVE_IMAGE_STYLE', 'responsive');
+
+function res_images_init(){
+  drupal_add_library('res_images', 'res_images');
+}
+function res_images_menu() {
+  $items['50K.jpg'] = array(
+    'page callback' => 'res_images_test_image',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+function res_images_test_image(){
+  $file = drupal_get_path('module', 'res_images').'/50K.jpg';
+
+  if (empty($file)) {
+    drupal_not_found();
+  }
+
+  $mime = mime_content_type($file);
+  header('Content-Type: ' . $mime);
+  header('Expires: 0');
+
+  // The readfile function is disabled on some hosting providers.
+  $handle = fopen($file, 'rb');
+  if ($handle !== false) {
+    fpassthru($handle);
+    fclose($handle);
+  }
+
+  drupal_exit();
+}
+function res_images_image_default_styles() {
+  require_once drupal_get_path('module', 'res_images').'/res_images.styles.inc';
+  return _res_images_image_styles();
+}
+function res_images_media_token_to_markup_alter(&$element, $tag_info, $settings){
+  if($tag_info['view_mode'] == 'responsive'){
+    $element['content']['#type'] = 'figure';
+  }
+}
+function res_images_theme(){
+  return array(
+    'figure' => array(
+      'render element' => 'element',
+    ),
+    'responsive_image_formatter' => array(
+      'variables' => array('item' => NULL, 'path' => NULL, 'fallback_image_style' => NULL , 'image_styles' => NULL),
+    )
+  );
+}
+/**
+ * Implements hook_library().
+ */
+function res_images_library() {
+  $libraries = array();
+
+  $path = drupal_get_path('module', 'res_images');
+  $libraries['res_images'] = array(
+    'title' => 'Res images',
+    'website' => '',
+    'version' => '1',
+    'js' => array(
+      $path . '/res_images.js' => array(),
+      $path . '/jquery.ba-resize.min.js' => array(),
+    ),
+  );
+  return $libraries;
+}
+function res_images_element_info() {
+  $types['figure'] = array(
+    '#theme_wrappers' => array('figure'),
+    '#process' => array('form_process_figure'),
+  );
+  return $types;
+}
+function theme_figure($variables) {
+  $element = $variables['element'];
+
+  // Special handling for form elements.
+  if (isset($element['#array_parents'])) {
+    // Assign an html ID.
+    if (!isset($element['#attributes']['id'])) {
+      $element['#attributes']['id'] = $element['#id'];
+    }
+    // Add the 'form-wrapper' class.
+    $element['#attributes']['class'][] = 'form-wrapper';
+  }
+
+  return '<figure' . drupal_attributes($element['#attributes']) . '>' . $element['#children'] . '</figure>';
+}
+function theme_responsive_image($variables){
+  dsm($variables);
+  $attributes = $variables['attributes'];
+  $attributes['src'] = file_create_url($variables['path']);
+
+  foreach (array('width', 'height', 'alt', 'title') as $key) {
+    if (isset($variables[$key])) {
+      $attributes[$key] = $variables[$key];
+    }
+  }
+  if(isset($variables['style_name']) && $variables['style_name'] == 'responsiv'){
+    $output = '<noscript><img' . drupal_attributes($attributes) . ' /></noscript>';
+    $styles = array();
+    $flat_json = '{';
+    foreach(image_styles() as $key => $style){
+      if(is_numeric($key)){
+        $styles[]=$key;
+        $url = image_style_url($key, $variables['uri']);
+        $flat_json.='"'.$key.'":"'.$url.'",';
+      }
+    }
+    $flat_json=substr($flat_json, 0, strlen($flat_json)-1);
+    $flat_json.='}';
+
+    $output.='<img
+    class="js-img responsive" data-srcset=\''.$flat_json.'\'
+    src="data:image/gif;base64,R0lGODlhEAAJAPAAAAAAAAAAACH5BAEAAAAALAAAAAAQAAkAAAIKhI+py+0Po5yUFQA7"
+    alt="">';
+
+    return $output;
+  }else{
+    return '<img' . drupal_attributes($attributes) . ' />';
+  }
+}
+function theme_responsive_image_formatter($variables) {
+  $item = $variables['item'];
+  $fallback_image_style = $variables['fallback_image_style'];
+  $alt = '';
+  $attributes = '';
+  $title = '';
+  $file_uri = '';
+  if($item['type'] == 'image'){
+    $file_uri = $item['uri'];
+    if (array_key_exists('alt', $item)) {
+      $alt = $item['alt'];
+    }
+    if (array_key_exists('title', $item)) {
+      $title = $item['title'];
+    }
+    if (isset($item['attributes'])) {
+      $attributes = $item['attributes'];
+    }
+  }
+  $fallback_image_vars = array(
+    'style_name' => $variables['fallback_image_style'],
+    'path' => $file_uri,
+    'alt' => $alt,
+    'title' => $title,
+    'attributes' => $attributes,
+  );
+  $flat_json = '{';
+  foreach($variables['image_styles'] as $key => $style){
+    $styles[]=$key;
+    $url = image_style_url($key, $file_uri);
+    $flat_json.='"'.$key.'":"'.$url.'",';
+  }
+  $flat_json=substr($flat_json, 0, strlen($flat_json)-1);
+  $flat_json.='}';
+
+  $output = '<noscript>'.theme('image_style', $fallback_image_vars).'</noscript>';
+  $output.='<img class="js-img responsive" data-srcset=\''.$flat_json.'\' src="data:image/gif;base64,R0lGODlhEAAJAPAAAAAAAAAAACH5BAEAAAAALAAAAAAQAAkAAAIKhI+py+0Po5yUFQA7" alt="'.$alt.'" title="'.$title.'">';
+  return '<div class="response-image-container">'.$output.'</div>';
+}
+function res_images_field_formatter_info() {
+  $info['responsive_image'] = array(
+    'label' => t('Responsive Image'),
+    'description' => t('Creates a image with data-src attribute.'),
+    'field types' => array('file', 'image'),
+    'settings' => array(
+      'fallback_image_style' => '',
+      'image_link' => '',
+      'image_styles' => ''
+    ),
+  );
+  return $info;
+}
+function res_images_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $element = array();
+  if ($display['type'] == 'responsive_image') {
+    $image_styles = image_style_options(FALSE, PASS_THROUGH);
+    foreach($image_styles as $key => $style){
+      if(is_numeric($key)){
+        $res_image_styles[$key] = $style;
+      }
+    }
+    $element['fallback_image_style'] = array(
+      '#title' => t('Fallback Image style'),
+      '#type' => 'select',
+      '#default_value' => $settings['fallback_image_style'],
+      '#empty_option' => t('None (original image)'),
+      '#options' => $image_styles,
+    );
+    $element['image_styles'] = array(
+      '#title' => t('Image styles to automate from'),
+      '#type' => 'select',
+      '#default_value' => $settings['image_styles'],
+      '#empty_option' => t('None (original image)'),
+      '#options' => $res_image_styles,
+      '#multiple' => TRUE
+    );
+    $link_types = array(
+      'file_entity' => t('File entity'),
+      'file' => t('File'),
+      'referencing_entity' => t('Referencing entity')
+    );
+    $element['image_link'] = array(
+      '#title' => t('Link image to'),
+      '#type' => 'select',
+      '#default_value' => $settings['image_link'],
+      '#empty_option' => t('Nothing'),
+      '#options' => $link_types,
+    );
+  }
+  return $element;
+}
+function res_images_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $settings = $display['settings'];
+  $link = FALSE;
+  // Check if the formatter involves a link.
+  if ($display['settings']['image_link'] == 'file_entity') {
+    $uri = entity_uri($entity_type, $entity);
+    $link = TRUE;
+  }
+  elseif ($display['settings']['image_link'] == 'file') {
+    $link_file = TRUE;
+    $link = $TRUE;
+  }elseif($display['settings']['image_link'] == 'referencing_entity'){
+    $link = TRUE;
+    $uri = '';
+  }
+  foreach ($items as $delta => $item) {
+    $element[$delta] = array(
+      '#theme' => 'responsive_image_formatter',
+      '#item' => $item,
+      '#fallback_image_style' => $display['settings']['fallback_image_style'],
+      '#path' => isset($uri) ? $uri : '',
+      '#image_styles' => $display['settings']['image_styles'],
+    );
+  }
+
+  return $element;
+}
+?>

@@ -126,13 +126,18 @@ function theme_responsive_image($variables){
   }
 }
 function theme_responsive_image_formatter($variables) {
+  $jquery_update_jquery_version = variable_get('jquery_update_jquery_version', '');
+  if($jquery_update_jquery_version < '1.7'){
+    drupal_set_message(t('!jquery_update should use version 1.7 or newer', array('!jquery_update' => l('jQuery Update', 'admin/config/development/jquery_update'))), 'warning', FALSE);
+  }
   $item = $variables['item'];
   $fallback_image_style = $variables['fallback_image_style'];
   $alt = '';
   $attributes = '';
   $title = '';
   $file_uri = '';
-  if($item['type'] == 'image'){
+  // if this is a image file
+  if(isset($item['fid']) && strpos($item['filemime'], 'image') !== FALSE){
     $file_uri = $item['uri'];
     if (array_key_exists('alt', $item)) {
       $alt = $item['alt'];
@@ -143,13 +148,15 @@ function theme_responsive_image_formatter($variables) {
     if (isset($item['attributes'])) {
       $attributes = $item['attributes'];
     }
+  }else{
+    return NULL;
   }
   $fallback_image_vars = array(
     'style_name' => $variables['fallback_image_style'],
     'path' => $file_uri,
     'alt' => $alt,
     'title' => $title,
-    'attributes' => $attributes,
+    'attributes' => $attributes
   );
   $flat_json = '{';
   foreach($variables['image_styles'] as $key => $style){
@@ -159,7 +166,6 @@ function theme_responsive_image_formatter($variables) {
   }
   $flat_json=substr($flat_json, 0, strlen($flat_json)-1);
   $flat_json.='}';
-
   $output = '<noscript>'.theme('image_style', $fallback_image_vars).'</noscript>';
   $output.='<img class="js-img responsive" data-srcset=\''.$flat_json.'\' src="data:image/gif;base64,R0lGODlhEAAJAPAAAAAAAAAAACH5BAEAAAAALAAAAAAQAAkAAAIKhI+py+0Po5yUFQA7" alt="'.$alt.'" title="'.$title.'">';
   if($variables['path']){
@@ -216,7 +222,6 @@ function res_images_field_formatter_settings_form($field, $instance, $view_mode,
       '#options' => $res_image_styles,
       '#multiple' => TRUE
     );
-
     $link_types = array();
     if($instance['entity_type'] == 'node' || isset($field['bundles']['node'])){
       $link_types['node'] = t('Node');
@@ -225,7 +230,6 @@ function res_images_field_formatter_settings_form($field, $instance, $view_mode,
       $link_types['file_entity'] = t('File entity');
       $link_types['file'] = t('Image file');
     }
-
     $element['image_link'] = array(
       '#title' => t('Link image to'),
       '#type' => 'select',
@@ -237,12 +241,11 @@ function res_images_field_formatter_settings_form($field, $instance, $view_mode,
   return $element;
 }
 function res_images_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-
   $settings = $display['settings'];
   $link = FALSE;
   $link_file = FALSE;
+  $element = array();
   // Check if the formatter involves a link.
-
   if ($settings['image_link'] == 'file_entity') {
     $uri = entity_uri($entity_type, $entity);
     $link = TRUE;
@@ -266,7 +269,6 @@ function res_images_field_formatter_view($entity_type, $entity, $field, $instanc
       '#image_styles' => $display['settings']['image_styles'],
     );
   }
-
   return $element;
 }
 ?>

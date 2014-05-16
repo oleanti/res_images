@@ -17,7 +17,7 @@
     useTransparentGif: false,
     transparentGifSrc: 'data:image/gif;base64,R0lGODlhAQABAIAAAMz/AAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==',
     minKbpsForHighBandwidth: 300,
-    speedTestUri: '/50K.jpg',
+    speedTestUri: '?q=50K.jpg',
     speedTestKB: 50,
     speedTestExpireMinutes: 30,
     forcedBandwidth: false,
@@ -151,7 +151,7 @@
           // uses https so there are no ugly security warnings from the browser
           speedTestUri = speedTestUri.replace( 'http:', 'https:' );
         }
-        speedTestImg.src = speedTestUri + "?r=" + Math.random();
+        speedTestImg.src = speedTestUri + "&r=" + Math.random();
 
         // calculate the maximum number of milliseconds it 'should' take to download an XX Kbps file
         // set a timeout so that if the speed test download takes too long
@@ -223,7 +223,6 @@
           .css('background', 'url("' + imageToUse.src + '") no-repeat 0 0')
           .css('background-size', 'contain');
       } else {
-
         $el.attr('src', imageToUse.src);
         $el.attr('width', imageToUse.wrapperWidth);
         $el.attr('data-width', imageToUse.key);
@@ -255,7 +254,7 @@
       return imageToUse;
     };
 
-    // loop throu all images
+    // loop throu all images on page
     $els.each(function(){
       var $el = $(this);
       var imageToUse = getImageToUse($el);
@@ -263,8 +262,8 @@
         setImageSource($el, imageToUse);
       }
       $el.on('speedTestComplete.responsive', function(){
-        //console.log('SPEED test complete');
-        // check if client can get high res image
+        // If the speedtest is completed after the image is set, change the image
+        // to a 'retina' image if device supports it and the bandwidth is wide enough
         if ($.responsive.devicePixelRatio > 1 && $.responsive.bandwidth === 'high') {
           var imageToUse = getImageToUse($el, 2);
         }else{
@@ -279,6 +278,8 @@
         $el.off('speedTestComplete.responsive');
       });
       $el.on('recheckImage.responsive', function(){
+        // A recheck function to use to check if the correct image is in use.
+        // Nice to use if the element the image is residing in is resized.
         imageToUse = getImageToUse($(this));
         if(typeof imageToUse !== 'undefined'){
           if(imageToUse.src != $el.attr('src')){

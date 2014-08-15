@@ -232,6 +232,7 @@ function res_images_field_formatter_settings_form($field, $instance, $view_mode,
     if($instance['entity_type'] == 'node' || isset($field['bundles']['node'])){
       $link_types['node'] = t('Node');
       $link_types['file'] = t('Image file');
+      $link_types['file_entity'] = t('File Entity');
     }elseif($instance['entity_type'] == 'file'){
       $link_types['file_entity'] = t('File entity');
       $link_types['file'] = t('Image file');
@@ -250,10 +251,12 @@ function res_images_field_formatter_view($entity_type, $entity, $field, $instanc
   $settings = $display['settings'];
   $link = FALSE;
   $link_file = FALSE;
+  $link_file_entity = FALSE;
   $element = array();
   // Check if the formatter involves a link.
   if ($settings['image_link'] == 'file_entity') {
     $uri = entity_uri($entity_type, $entity);
+    $link_file_entity = TRUE;
     $link = TRUE;
   }
   elseif ($settings['image_link'] == 'file') {
@@ -266,6 +269,8 @@ function res_images_field_formatter_view($entity_type, $entity, $field, $instanc
   foreach ($items as $delta => $item) {
     if($link_file == TRUE){
       $uri['path'] = file_create_url($item['uri']);
+    }elseif($link_file_entity == TRUE) {
+      $uri['path'] = url('file/' . $item['fid'], array('absolute' => TRUE));
     }
     $element[$delta] = array(
       '#theme' => 'responsive_image_formatter',

@@ -74,6 +74,7 @@ function res_images_element_info() {
   $types['figure'] = array(
     '#theme_wrappers' => array('figure'),
     '#process' => array('form_process_figure'),
+    '#type' => 'figure'
   );
   return $types;
 }
